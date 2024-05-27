@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, SafeAreaView, Animated } from 'react-native';
 import { firestore } from '../../config/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,6 +9,8 @@ const KullaniciAnasayfa = () => {
     const [ilanlar, setIlanlar] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigation = useNavigation();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [sidebarWidth] = useState(new Animated.Value(0));
 
     useEffect(() => {
         const fetchIlanlar = async () => {
@@ -34,6 +36,27 @@ const KullaniciAnasayfa = () => {
 
     const handleIlanIncele = (ilanId) => {
         navigation.navigate('IlanIncele', { ilanId });
+    };
+
+    const toggleSidebar = () => {
+        Animated.timing(sidebarWidth, {
+            toValue: isSidebarOpen ? 0 : 200, // Adjust width as needed
+            duration: 300,
+            useNativeDriver: false,
+        }).start();
+        setIsSidebarOpen(!isSidebarOpen);
+    };
+
+    const navigateToProfile = () => {
+        navigation.navigate('KullaniciProfili');
+    };
+
+    const navigateToOffers = () => {
+        navigation.navigate('Tekliflerim');
+    };
+
+    const navigateToApplications = () => {
+        navigation.navigate('Basvurularim');
     };
 
     const renderIlanItem = ({ item }) => (
@@ -65,9 +88,25 @@ const KullaniciAnasayfa = () => {
     return (
         <SafeAreaView style={styles.safeContainer}>
             <View style={styles.navbar}>
-                <Ionicons name="menu" size={28} color="black" />
+                <TouchableOpacity onPress={toggleSidebar}>
+                    <Ionicons name="menu" size={28} color="black" />
+                </TouchableOpacity>
                 <Text style={styles.navbarTitle}>Anasayfa</Text>
             </View>
+            <Animated.View style={[styles.sidebar, { width: sidebarWidth }]}>
+                <TouchableOpacity style={styles.closeButton} onPress={toggleSidebar}>
+                    <Ionicons name="close" size={24} color="black" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.sidebarItem} onPress={navigateToProfile}>
+                    <Text>Profilim</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.sidebarItem} onPress={navigateToOffers}>
+                    <Text>Tekliflerim</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.sidebarItem} onPress={navigateToApplications}>
+                    <Text>Başvurularım</Text>
+                </TouchableOpacity>
+            </Animated.View>
             <View style={styles.content}>
                 {ilanlar.length === 0 ? (
                     <View style={styles.emptyContainer}>
@@ -161,6 +200,34 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#888',
     },
+    sidebar: {
+        position: 'absolute',
+        top: 60, // Adjust as needed
+        left: 0,
+        bottom: 0,
+        backgroundColor: '#fff',
+        borderRightWidth: 1,
+        borderRightColor: '#ddd',
+        zIndex: 999,
+        flexDirection: 'column',
+        justifyContent: 'flex-start',
+        alignItems: 'flex-start',
+    },
+    sidebarItem: {
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: '#ddd',
+        width: '100%',
+    },
+    closeButton: {
+        padding: 10,
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        zIndex: 1000,
+    },
 });
 
 export default KullaniciAnasayfa;
+
