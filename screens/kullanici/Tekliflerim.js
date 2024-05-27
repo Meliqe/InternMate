@@ -6,6 +6,7 @@ const Tekliflerim = () => {
         <View>
             <Text>Tekliflerim</Text>
         </View>
+
     )
 }
 
