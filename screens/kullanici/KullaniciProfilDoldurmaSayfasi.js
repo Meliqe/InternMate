@@ -2,8 +2,11 @@ import React, { useState } from 'react';
 import { StyleSheet, View, Text, TextInput, TouchableOpacity, SafeAreaView, Alert, Image, ScrollView } from 'react-native';
 import { auth, firestore } from '../../config/firebase';
 import { doc, setDoc } from 'firebase/firestore';
-import * as DocumentPicker from 'expo-document-picker'; // CV yükleme için
-import { Ionicons } from '@expo/vector-icons'; // İkon için
+import { getDownloadURL, ref, uploadFile, uploadBytesResumable } from 'firebase/storage';
+import * as DocumentPicker from 'expo-document-picker';
+import { Ionicons } from '@expo/vector-icons';
+import { storage } from '../../config/firebase'; // Firebase Storage'ı içeri aktarın
+
 
 export default function ProfilDoldurmaSayfasi({ navigation }) {
     const [name, setName] = useState('');
@@ -15,26 +18,34 @@ export default function ProfilDoldurmaSayfasi({ navigation }) {
     const [certificates, setCertificates] = useState([]);
     const [school, setSchool] = useState('');
 
+    const [uploadProgress, setUploadProgress] = useState(0);
+
+
     const handleSaveProfile = async () => {
         try {
-            // Profil verilerini Firestore'a kaydet
             const currentUser = auth.currentUser;
             if (currentUser) {
-                await setDoc(doc(firestore, 'users2', currentUser.uid), {
-                    name,
-                    surname,
-                    phone,
-                    grade,
-                    school,
-                    introduction,
-                    cvFile,
-                    certificates,
-                    profileCompleted: true
-                });
+                const cvUrl = await uploadCV(cvFile); // CV dosyasını yükle
+                //console.log(cvFile);
 
-                Alert.alert('Başarılı', 'Profil başarıyla oluşturuldu!');
-                // İstediğiniz yere yönlendirme yapabilirsiniz
-                navigation.navigate('KullaniciAnasayfa');
+                if (cvFile) {
+                    await setDoc(doc(firestore, 'users2', currentUser.uid), {
+                        name,
+                        surname,
+                        phone,
+                        grade,
+                        school,
+                        introduction,
+                        cvFile: cvUrl, // CV dosyasının URL'sini Firestore'a kaydedin
+                        certificates,
+                        profileCompleted: true
+                    });
+
+                    Alert.alert('Başarılı', 'Profil başarıyla oluşturuldu!');
+                    navigation.navigate('KullaniciAnasayfa');
+                } else {
+                    Alert.alert('Hata', 'CV dosyasını yüklerken bir hata oluştu!');
+                }
             } else {
                 Alert.alert('Hata', 'Kullanıcı oturumu bulunamadı!');
             }
@@ -43,10 +54,52 @@ export default function ProfilDoldurmaSayfasi({ navigation }) {
         }
     };
 
+    const handleSelectCV = async () => {
+        try {
+            const file = await DocumentPicker.getDocumentAsync({
+                type: 'application/msword', // CV dosyasının sadece PDF formatında olmasını sağlayın
+            });
+            const uri = file.assets[0].uri;
+                setCvFile(uri); // CV dosyasının URI'sini saklayın
+                //console.log(file.assets[0].uri);
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+    const uploadCV = async (fileUri) => {
+        try {
+            if (!fileUri) return null;
+    
+            const fileName = fileUri.split('/').pop();
+            console.log(fileUri);
+            const response = await fetch(fileUri);
+            const blob = await response.blob();
+    
+            const storageRef = ref(storage, 'documents/' + fileName);
+            const uploadTask = uploadBytesResumable(storageRef, blob);
+    
+            uploadTask.on('state_changed', snapshot => {
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                setUploadProgress(progress);
+            });
+    
+            await uploadTask;
+    
+            const downloadURL = await getDownloadURL(storageRef);
+            //console.log('downloadURL: ', downloadURL);
+            return downloadURL;
+    
+        } catch (error) {
+            console.log(error);
+            Alert.alert('Hata', 'Belge yüklenirken bir hata oluştu.');
+        }
+    };
+
     const handleSelectCertificates = async () => {
         try {
             const res = await DocumentPicker.pickMultiple({
-                type: [DocumentPicker.types.pdf, DocumentPicker.types.doc], // Sadece pdf ve doc dosyalarını seç
+                type: [DocumentPicker.types.pdf, DocumentPicker.types.doc],
             });
 
             const selectedFiles = res.map(file => ({
@@ -64,20 +117,6 @@ export default function ProfilDoldurmaSayfasi({ navigation }) {
                 // Hata meydana geldi
                 console.log(err);
             }
-        }
-    };
-
-    const handleSelectCV = async () => {
-        try {
-            const result = await DocumentPicker.getDocumentAsync({
-                type: 'application/msword', // Sadece DOC dosyalarını seç
-            });
-
-            if (result.type === 'success') {
-                setCvFile(result.uri);
-            }
-        } catch (error) {
-            console.log('CV yükleme hatası:', error);
         }
     };
 
@@ -209,7 +248,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
     },
     cvItem: {
-        backgroundColor: '#f9f9f9',
+        backgroundColor: '#bcd6ff',
         borderRadius: 5,
         paddingHorizontal: 10,
         paddingVertical: 8,
@@ -222,3 +261,5 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
 });
+
+
