@@ -8,8 +8,6 @@ import { useNavigation } from '@react-navigation/native';
 const KullaniciAnasayfa = () => {
     const [ilanlar, setIlanlar] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-
     const navigation = useNavigation();
 
     useEffect(() => {
@@ -54,14 +52,6 @@ const KullaniciAnasayfa = () => {
         </View>
     );
 
-    const toggleSidebar = () => {
-        setSidebarOpen(!sidebarOpen);
-    };
-
-    const closeSidebar = () => {
-        setSidebarOpen(false);
-    };
-
     if (loading) {
         return (
             <SafeAreaView style={styles.safeContainer}>
@@ -74,15 +64,11 @@ const KullaniciAnasayfa = () => {
 
     return (
         <SafeAreaView style={styles.safeContainer}>
-            {/* Sidebar */}
-            {sidebarOpen && <Sidebar onClose={closeSidebar} />}
-            <View style={[styles.content, sidebarOpen && styles.contentWithSidebar]}>
-                <View style={styles.navbar}>
-                    <TouchableOpacity onPress={toggleSidebar}>
-                        <Ionicons name="menu" size={28} color="black" />
-                    </TouchableOpacity>
-                    <Text style={styles.navbarTitle}>Anasayfa</Text>
-                </View>
+            <View style={styles.navbar}>
+                <Ionicons name="menu" size={28} color="black" />
+                <Text style={styles.navbarTitle}>Anasayfa</Text>
+            </View>
+            <View style={styles.content}>
                 {ilanlar.length === 0 ? (
                     <View style={styles.emptyContainer}>
                         <Text style={styles.emptyText}>İlan bulunamadı</Text>
@@ -97,17 +83,6 @@ const KullaniciAnasayfa = () => {
                 )}
             </View>
         </SafeAreaView>
-    );
-};
-
-const Sidebar = ({ onClose }) => {
-    return (
-        <View style={styles.sidebarContainer}>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                <Ionicons name="close" size={24} color="black" />
-            </TouchableOpacity>
-            <Text style={styles.sidebarText}>Sidebar Content</Text>
-        </View>
     );
 };
 
@@ -139,9 +114,6 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingHorizontal: 20,
         paddingTop: 10,
-    },
-    contentWithSidebar: {
-        marginLeft: 200,
     },
     ilanListContainer: {
         paddingBottom: 20,
@@ -188,29 +160,6 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 16,
         color: '#888',
-    },
-    sidebarContainer: {
-        backgroundColor: '#fff',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        bottom: 0,
-        width: 200,
-        paddingTop: 50,
-        borderRightWidth: 1,
-        borderRightColor: '#ddd',
-        zIndex: 2,
-    },
-    sidebarText: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginLeft: 10,
-    },
-    closeButton: {
-        position: 'absolute',
-        top: 10,
-        right: 10,
-        zIndex: 3,
     },
 });
 
