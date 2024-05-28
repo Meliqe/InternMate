@@ -35,7 +35,7 @@ const KullaniciAnasayfa = () => {
     }, []);
 
     const handleIlanIncele = (ilanId) => {
-        navigation.navigate('IlanIncele', { ilanId });
+        navigation.navigate('IlanDetaylari', { ilanId });
     };
 
     const toggleSidebar = () => {

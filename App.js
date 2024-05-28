@@ -18,6 +18,7 @@ import Basvurularim from './screens/kullanici/Basvurularim';
 import Tekliflerim from './screens/kullanici/Tekliflerim';
 import YardimDestek from './screens/kullanici/YardimDestek';
 import KullaniciProfili from './screens/kullanici/KullaniciProfili';
+import IlanDetaylar from './screens/kullanici/IlanDetaylar';
 
 const Stack = createStackNavigator();
 
@@ -50,6 +51,7 @@ export default function App() {
         <Stack.Screen name="Basvurularim" component={Basvurularim} options={{ headerShown: false }} />
         <Stack.Screen name="Tekliflerim" component={Tekliflerim} options={{ headerShown: false }} />
         <Stack.Screen name="YardimDestek" component={YardimDestek} options={{ headerShown: false }} />
+        <Stack.Screen name="IlanDetaylari" component={IlanDetaylar} options={{ headerShown: false }} />
 
       </Stack.Navigator>
     </NavigationContainer>
