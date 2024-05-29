@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, Alert } from 'react-native';
 import { firestore } from '../../config/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useRoute } from '@react-navigation/native';
+import { getAuth } from 'firebase/auth';
 
 const IlanDetaylar = () => {
     const route = useRoute();
@@ -10,6 +11,8 @@ const IlanDetaylar = () => {
     const [ilan, setIlan] = useState(null);
     const [kullanici, setKullanici] = useState(null);
     const [loading, setLoading] = useState(true);
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
 
     useEffect(() => {
         const fetchIlanAndKullanici = async () => {
@@ -39,6 +42,29 @@ const IlanDetaylar = () => {
         fetchIlanAndKullanici();
     }, [ilanId]);
 
+    const handleBasvur = async () => {
+        if (!currentUser) {
+            Alert.alert('Hata', 'Başvuru yapabilmek için giriş yapmalısınız.');
+            return;
+        }
+
+        const basvuruData = {
+            basvurutarihi: new Date(),
+            basvurudurumu: 'Beklemede',
+            basvurankisi: currentUser.uid,
+            basvurulanilan: ilanId,
+        };
+
+        try {
+            const basvuruRef = doc(firestore, 'basvurular', `${ilanId}_${currentUser.uid}`);
+            await setDoc(basvuruRef, basvuruData);
+            Alert.alert('Başarılı', 'Başvurunuz başarıyla gönderildi.');
+        } catch (error) {
+            console.error('Başvuru hatası: ', error);
+            Alert.alert('Hata', 'Başvuru yapılırken bir hata oluştu.');
+        }
+    };
+
     if (loading) {
         return (
             <SafeAreaView style={styles.safeContainer}>
@@ -62,6 +88,9 @@ const IlanDetaylar = () => {
     return (
         <SafeAreaView style={styles.safeContainer}>
             <View style={styles.container}>
+                <View style={styles.imageContainer}>
+                    <Image source={require('../../assets/ilanincele.jpg')} style={styles.ilanImage} />
+                </View>
                 <View style={styles.box}>
                     <View style={styles.header}>
                         <Text style={styles.ilanBaslik}>{ilan.title}</Text>
@@ -78,6 +107,9 @@ const IlanDetaylar = () => {
                         <Text style={styles.kullaniciAd}>{kullanici.representativeName}</Text>
                         <Text style={styles.kullaniciAd}>{kullanici.representativeSurname}</Text>
                     </View>
+                    <TouchableOpacity style={styles.basvurButton} onPress={handleBasvur}>
+                        <Text style={styles.basvurButtonText}>Başvur</Text>
+                    </TouchableOpacity>
                 </View>
             </View>
         </SafeAreaView>
@@ -146,6 +178,29 @@ const styles = StyleSheet.create({
     kullaniciAd: {
         fontSize: 16,
         marginBottom: 5,
+    },
+    basvurButton: {
+        backgroundColor: '#BCD6FF',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        alignSelf: 'center',
+        marginTop: 20,
+    },
+    basvurButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
+    imageContainer: {
+        alignItems: 'center',
+    },
+    ilanImage: {
+        width: 350,
+        height: 350,
+        resizeMode: 'cover',
+        borderRadius: 8,
+        marginBottom: 20,
     },
 });
 
