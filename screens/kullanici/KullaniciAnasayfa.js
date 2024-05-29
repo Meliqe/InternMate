@@ -59,6 +59,12 @@ const KullaniciAnasayfa = () => {
         navigation.navigate('Basvurularim');
     };
 
+    const handleLogout = () => {
+        // Your logout logic here
+        // Redirect to login page after logout
+        navigation.navigate('KullaniciGiris');
+    };
+
     const renderIlanItem = ({ item }) => (
         <View style={styles.ilanContainer}>
             <View style={styles.ilanInfo}>
@@ -92,6 +98,9 @@ const KullaniciAnasayfa = () => {
                     <Ionicons name="menu" size={28} color="black" />
                 </TouchableOpacity>
                 <Text style={styles.navbarTitle}>Anasayfa</Text>
+                <TouchableOpacity onPress={handleLogout}>
+                    <Ionicons name="log-out" size={28} color="black" />
+                </TouchableOpacity>
             </View>
             <Animated.View style={[styles.sidebar, { width: sidebarWidth }]}>
                 <TouchableOpacity style={styles.closeButton} onPress={toggleSidebar}>
@@ -138,6 +147,7 @@ const styles = StyleSheet.create({
     navbar: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'space-between', // Align items to start, end, and in between
         paddingHorizontal: 20,
         paddingVertical: 10,
         borderBottomWidth: 1,
@@ -199,8 +209,7 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 16,
         color: '#888',
-    },
-    sidebar: {
+    }, sidebar: {
         position: 'absolute',
         top: 60, // Adjust as needed
         left: 0,

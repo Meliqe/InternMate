@@ -1,69 +1,73 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { firestore } from '../../config/firebase';
-import { collection, getDocs, query, where, addDoc } from 'firebase/firestore';
 
-const GelenBasvurular = () => {
-    const [gelenBasvurular, setGelenBasvurular] = useState([]);
+const GelenBasvurular = ({ currentUser }) => {
+    const [basvurular, setBasvurular] = useState([]);
 
     useEffect(() => {
-        const fetchGelenBasvurular = async () => {
+        const fetchBasvurular = async () => {
             try {
-                // Firestore bağlantısı üzerinden basvurular koleksiyonundaki tüm belgeleri al
-                const basvurularQuery = query(collection(firestore, 'basvurular'));
-                const querySnapshot = await getDocs(basvurularQuery);
-                const gelenBasvurularData = [];
+                // Başvurular koleksiyonunu sorgula
+                const basvuruQuery = query(collection(firestore, 'basvurular'));
+                const basvuruSnapshot = await getDocs(basvuruQuery);
 
-                // Her başvuru belgesi için işlem yap
-                querySnapshot.forEach(async (doc) => {
-                    const basvuruData = doc.data();
-                    const ilanId = basvuruData.basvurulanilan;
+                const basvuruData = [];
 
-                    // İlgili ilanın belgesini al
-                    const ilanDoc = await getDoc(doc(firestore, 'ilanlar', ilanId));
-                    const ilanData = ilanDoc.data();
+                for (const basvuruDoc of basvuruSnapshot.docs) {
+                    const basvuru = basvuruDoc.data();
 
-                    // İlgili ilanın sahibinin ID'sini al
-                    const ilanSahibiId = ilanData.ilanverenkisi;
+                    // Başvuran kişinin bilgilerini al
+                    const basvuranKisiQuery = query(collection(firestore, 'users2'), where('userId', '==', basvuru.basvurankisi));
+                    const basvuranKisiSnapshot = await getDocs(basvuranKisiQuery);
+                    const basvuranKisiData = basvuranKisiSnapshot.docs.map(doc => doc.data());
 
-                    // İlgili ilanı yayımlayan kurumsal kullanıcının gelen kutusuna başvuruyu ekle
-                    await addDoc(collection(firestore, `users/${ilanSahibiId}/gelenKutusu`), basvuruData);
+                    // Başvurulan ilanı al
+                    const ilanQuery = query(collection(firestore, 'ilanlar'), where('ilanId', '==', basvuru.basvurulanilan));
+                    const ilanSnapshot = await getDocs(ilanQuery);
+                    const ilanData = ilanSnapshot.docs.map(doc => doc.data());
 
-                    // Gelen başvurular listesine ekle
-                    gelenBasvurularData.push({ basvuruData, ilanData, ilanSahibiId });
-                });
+                    if (ilanData.length > 0 && basvuranKisiData.length > 0) {
+                        const ilan = ilanData[0];
+                        const basvuranKisi = basvuranKisiData[0];
 
-                // State'i güncelle
-                setGelenBasvurular(gelenBasvurularData);
+                        // Eğer oturum açan kullanıcı ile ilanı veren kişi aynı ise
+                        if (ilan.ilanverenkisi === currentUser) {
+                            basvuruData.push({
+                                ...basvuru,
+                                basvuranKisi,
+                                ilan
+                            });
+                        }
+                    }
+                }
+
+                setBasvurular(basvuruData);
             } catch (error) {
-                console.error('Error fetching gelen basvurular: ', error);
+                console.error('Başvuruları getirme hatası: ', error);
             }
         };
 
-        fetchGelenBasvurular();
-    }, []);
-
-    const renderBasvuruItem = ({ item }) => (
-        <View style={styles.basvuruContainer}>
-            <Text>Kullanıcı: {item.basvuruData.basvurankisi}</Text>
-            <Text>Tarih: {item.basvuruData.basvurutarihi.toDate().toLocaleDateString()}</Text>
-            <Text>İlan: {item.ilanData.ilanBasligi}</Text>
-            {/* İlan sahibinin ID'si: {item.ilanSahibiId} */}
-        </View>
-    );
+        if (currentUser) {
+            fetchBasvurular();
+        }
+    }, [currentUser]);
 
     return (
         <View style={styles.container}>
-            {gelenBasvurular.length === 0 ? (
-                <Text style={styles.emptyText}>Gelen başvuru yok</Text>
-            ) : (
-                <FlatList
-                    data={gelenBasvurular}
-                    renderItem={renderBasvuruItem}
-                    keyExtractor={(item, index) => index.toString()}
-                    contentContainerStyle={styles.basvuruListContainer}
-                />
-            )}
+            <Text style={styles.title}>Gelen Başvurular</Text>
+            <FlatList
+                data={basvurular}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({ item }) => (
+                    <View style={styles.basvuruContainer}>
+                        <Text style={styles.basvuruText}>Başvuran Kişi: {item.basvuranKisi.name}</Text>
+                        <Text style={styles.basvuruText}>Başvurulan İlan: {item.ilan.title}</Text>
+                        <Text style={styles.basvuruText}>Başvuru Tarihi: {item.basvurutarihi}</Text>
+                    </View>
+                )}
+            />
         </View>
     );
 };
@@ -71,24 +75,25 @@ const GelenBasvurular = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
-        paddingHorizontal: 20,
-        paddingTop: 50,
-        justifyContent: 'center', // Dikey hizalamayı merkeze al
-        alignItems: 'center', // Yatay hizalamayı merkeze al
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
     },
-    basvuruListContainer: {
-        paddingBottom: 20,
+    title: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        marginBottom: 20,
     },
     basvuruContainer: {
-        backgroundColor: '#f0f0f0',
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 10,
         padding: 10,
         marginBottom: 10,
-        borderRadius: 8,
     },
-    emptyText: {
+    basvuruText: {
         fontSize: 16,
-        color: '#888',
+        marginBottom: 5,
     },
 });
 
