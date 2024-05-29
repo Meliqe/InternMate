@@ -4,7 +4,7 @@ import { firestore } from '../../config/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { getAuth, signOut } from 'firebase/auth'; // signOut eklenmeli
+import { getAuth, signOut } from 'firebase/auth';
 
 const KullaniciAnasayfa = () => {
     const [ilanlar, setIlanlar] = useState([]);
@@ -18,12 +18,10 @@ const KullaniciAnasayfa = () => {
     useEffect(() => {
         const fetchIlanlar = async () => {
             try {
-                // Kullanıcının başvurduğu ilanları alın
                 const basvurularQuery = query(collection(firestore, 'basvurular'), where('basvurankisi', '==', currentUser.uid));
                 const basvurularSnapshot = await getDocs(basvurularQuery);
                 const basvurulanIlanlar = basvurularSnapshot.docs.map(doc => doc.data().basvurulanilan);
 
-                // Tüm ilanları alın ve başvurulmayan ilanları filtreleyin
                 const ilanlarQuery = collection(firestore, 'ilanlar');
                 const querySnapshot = await getDocs(ilanlarQuery);
                 const fetchedIlanlar = querySnapshot.docs
@@ -56,7 +54,7 @@ const KullaniciAnasayfa = () => {
 
     const toggleSidebar = () => {
         Animated.timing(sidebarWidth, {
-            toValue: isSidebarOpen ? 0 : 200, // Adjust width as needed
+            toValue: isSidebarOpen ? 0 : 200,
             duration: 300,
             useNativeDriver: false,
         }).start();
@@ -100,6 +98,9 @@ const KullaniciAnasayfa = () => {
     return (
         <SafeAreaView style={styles.safeContainer}>
             <View style={styles.navbar}>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <Ionicons name="arrow-back" size={28} color="black" />
+                </TouchableOpacity>
                 <TouchableOpacity onPress={toggleSidebar}>
                     <Ionicons name="menu" size={28} color="black" />
                 </TouchableOpacity>
@@ -136,6 +137,7 @@ const KullaniciAnasayfa = () => {
         </SafeAreaView>
     );
 };
+
 const styles = StyleSheet.create({
     safeContainer: {
         flex: 1,
@@ -159,7 +161,7 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: 'bold',
         marginLeft: 10,
-        flex: 1, // Navbar title'ın genişlemesini sağlar
+        flex: 1,
     },
     content: {
         flex: 1,
@@ -170,10 +172,12 @@ const styles = StyleSheet.create({
         paddingBottom: 20,
     },
     ilanContainer: {
-        backgroundColor: '#f0f0f0',
+        backgroundColor: '#fff',
         padding: 10,
         marginBottom: 10,
         borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#BCD6FF',
     },
     ilanInfo: {
         flex: 1,
@@ -192,7 +196,7 @@ const styles = StyleSheet.create({
         color: '#888',
     },
     inceleButton: {
-        backgroundColor: '#007bff',
+        backgroundColor: '#BCD6FF',
         paddingVertical: 10,
         paddingHorizontal: 15,
         borderRadius: 8,
@@ -214,7 +218,7 @@ const styles = StyleSheet.create({
     },
     sidebar: {
         position: 'absolute',
-        top: 60, // Adjust as needed
+        top: 60,
         left: 0,
         bottom: 0,
         backgroundColor: '#fff',

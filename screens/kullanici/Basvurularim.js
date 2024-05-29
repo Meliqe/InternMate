@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, FlatList } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { firestore } from '../../config/firebase';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
-const Basvurularim = () => {
+const Basvurularim = ({ navigation }) => {
     const [basvurular, setBasvurular] = useState([]);
     const [loading, setLoading] = useState(true);
     const auth = getAuth();
@@ -49,6 +50,10 @@ const Basvurularim = () => {
         }
     };
 
+    const handleGoBack = () => {
+        navigation.goBack();
+    };
+
     if (loading) {
         return (
             <SafeAreaView style={styles.safeContainer}>
@@ -71,6 +76,11 @@ const Basvurularim = () => {
 
     return (
         <SafeAreaView style={styles.safeContainer}>
+            <View style={styles.navbar}>
+                <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
+                    <Ionicons name="arrow-back" size={24} color="#BCD6FF" />
+                </TouchableOpacity>
+            </View>
             <FlatList
                 contentContainerStyle={styles.listContentContainer}
                 data={basvurular}
@@ -114,15 +124,15 @@ const styles = StyleSheet.create({
         color: '#888',
     },
     listContentContainer: {
-        paddingTop: 50, // Daha fazla boşluk için değer arttırıldı
-        paddingBottom: 20, // Alt kısımda boşluk ekleyin
+        paddingTop: 50,
+        paddingBottom: 20,
     },
     basvuruContainer: {
-        borderWidth: 2, // Border genişliği arttırıldı
+        borderWidth: 2,
         borderRadius: 10,
         padding: 20,
-        marginHorizontal: 20, // Yatayda biraz boşluk ekleyin
-        marginVertical: 10, // Dikeyde biraz boşluk ekleyin
+        marginHorizontal: 20,
+        marginVertical: 10,
     },
     ilanBaslik: {
         fontSize: 20,
@@ -147,7 +157,19 @@ const styles = StyleSheet.create({
     },
     ilanaciklama: {
         fontSize: 16,
-    }
+    },
+    navbar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#ddd',
+    },
+    backButtonText: {
+        fontSize: 18,
+        color: '#BCD6FF', // Blue color for back button text
+    },
 });
 
 export default Basvurularim;

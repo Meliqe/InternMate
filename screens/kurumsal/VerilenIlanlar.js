@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, BackHandler } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { auth, firestore } from '../../config/firebase';
 import { collection, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { Ionicons } from '@expo/vector-icons';
+
 
 const IlanlarimSayfasi = () => {
     const [ilanlar, setIlanlar] = useState([]);
     const [loading, setLoading] = useState(true);
+    const navigation = useNavigation();
 
     useEffect(() => {
         const fetchIlanlar = async () => {
@@ -35,6 +39,13 @@ const IlanlarimSayfasi = () => {
         };
 
         fetchIlanlar();
+
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+            navigation.goBack();
+            return true;
+        });
+
+        return () => backHandler.remove();
     }, []);
 
     const handleDeleteIlan = async (ilanId) => {
@@ -78,6 +89,10 @@ const IlanlarimSayfasi = () => {
         </View>
     );
 
+    const handleGeri = () => {
+        navigation.goBack();
+    };
+
     if (loading) {
         return (
             <View style={styles.container}>
@@ -88,6 +103,11 @@ const IlanlarimSayfasi = () => {
 
     return (
         <View style={styles.container}>
+            <TouchableOpacity onPress={handleGeri} style={styles.geriButton}>
+                <Ionicons name="arrow-back" size={24} color="#BCD6FF" />
+            </TouchableOpacity>
+
+
             {ilanlar.length === 0 ? (
                 <View style={styles.emptyContainer}>
                     <Text style={styles.emptyText}>İlan verilmedi</Text>
@@ -147,7 +167,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
     },
     buttonText: {
-        color: '#fff',
+        color: 'black',
         fontWeight: 'bold',
     },
     emptyContainer: {
@@ -158,6 +178,13 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 16,
         color: '#888',
+    },
+    geriButton: {
+        Color: '#007bff',
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+        borderRadius: 8,
+        marginBottom: 20,
     },
 });
 
