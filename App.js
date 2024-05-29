@@ -18,6 +18,8 @@ import Basvurularim from './screens/kullanici/Basvurularim';
 import YardimDestek from './screens/kullanici/YardimDestek';
 import KullaniciProfili from './screens/kullanici/KullaniciProfili';
 import IlanDetaylar from './screens/kullanici/IlanDetaylar';
+import KurumsalProfilGuncelleme from './screens/kurumsal/KurumsalProfilGuncelleme';
+import KullaniciProfilGuncelle from './screens/kullanici/KullaniciProfilGuncelle';
 
 const Stack = createStackNavigator();
 
@@ -42,6 +44,7 @@ export default function App() {
         <Stack.Screen name="VerilenIlanlar" component={VerilenIlanlar} options={{ headerShown: false }} />
         <Stack.Screen name="IlanOlusturmaSayfasi" component={IlanOlusturmaSayfasi} options={{ headerShown: false }} />
         <Stack.Screen name="KurumsalProfilSayfasi" component={KurumsalProfilSayfasi} options={{ headerShown: false }} />
+        <Stack.Screen name="KurumsalProfilGuncelleme" component={KurumsalProfilGuncelleme} options={{ headerShown: false }} />
         <Stack.Screen name="KullaniciGiris" component={KullaniciGiris} options={{ headerShown: false }} />
         <Stack.Screen name="KullaniciKayit" component={KullaniciKayit} options={{ headerShown: false }} />
         <Stack.Screen name="KullaniciAnasayfa" component={KullaniciAnasayfa} options={{ headerShown: false }} />
@@ -50,7 +53,7 @@ export default function App() {
         <Stack.Screen name="Basvurularim" component={Basvurularim} options={{ headerShown: false }} />
         <Stack.Screen name="YardimDestek" component={YardimDestek} options={{ headerShown: false }} />
         <Stack.Screen name="IlanDetaylari" component={IlanDetaylar} options={{ headerShown: false }} />
-
+        <Stack.Screen name="KullaniciProfilGuncelle" component={KullaniciProfilGuncelle} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

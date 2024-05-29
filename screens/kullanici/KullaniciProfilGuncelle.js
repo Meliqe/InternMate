@@ -1,51 +1,41 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, SafeAreaView, Alert, Image, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, TextInput, TouchableOpacity, SafeAreaView, Alert, ScrollView } from 'react-native';
 import { auth, firestore } from '../../config/firebase';
 import { doc, setDoc } from 'firebase/firestore';
-import { getDownloadURL, ref, uploadFile, uploadBytesResumable } from 'firebase/storage';
+import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
 import * as DocumentPicker from 'expo-document-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { storage } from '../../config/firebase'; // Firebase Storage'ı içeri aktarın
 
-
-export default function ProfilDoldurmaSayfasi({ navigation }) {
+export default function ProfilGuncelle({ navigation }) {
     const [name, setName] = useState('');
     const [surname, setSurname] = useState('');
     const [phone, setPhone] = useState('');
     const [grade, setGrade] = useState('');
     const [introduction, setIntroduction] = useState('');
-    const [cvFile, setCvFile] = useState(null);
-    const [certificates, setCertificates] = useState([]);
+    const [cvFile, setCvFile] = useState(null); // CV dosyasının URI'sini saklamak için state ekleyin
     const [school, setSchool] = useState('');
 
     const [uploadProgress, setUploadProgress] = useState(0);
-
 
     const handleSaveProfile = async () => {
         try {
             const currentUser = auth.currentUser;
             if (currentUser) {
                 const cvUrl = await uploadCV(cvFile); // CV dosyasını yükle
-                //console.log(cvFile);
 
-                if (cvFile) {
-                    await setDoc(doc(firestore, 'users2', currentUser.uid), {
-                        name,
-                        surname,
-                        phone,
-                        grade,
-                        school,
-                        introduction,
-                        cvFile: cvUrl, // CV dosyasının URL'sini Firestore'a kaydedin
-                        certificates,
-                        profileCompleted: true
-                    });
+                await setDoc(doc(firestore, 'users2', currentUser.uid), {
+                    name,
+                    surname,
+                    phone,
+                    grade,
+                    school,
+                    introduction,
+                    cvFile: cvUrl, // CV dosyasının URL'sini Firestore'a kaydedin
+                });
 
-                    Alert.alert('Başarılı', 'Profil başarıyla oluşturuldu!');
-                    navigation.navigate('KullaniciAnasayfa');
-                } else {
-                    Alert.alert('Hata', 'CV dosyasını yüklerken bir hata oluştu!');
-                }
+                Alert.alert('Başarılı', 'Profil başarıyla güncellendi!');
+                navigation.goBack();
             } else {
                 Alert.alert('Hata', 'Kullanıcı oturumu bulunamadı!');
             }
@@ -59,9 +49,8 @@ export default function ProfilDoldurmaSayfasi({ navigation }) {
             const file = await DocumentPicker.getDocumentAsync({
                 type: 'application/msword', // CV dosyasının sadece PDF formatında olmasını sağlayın
             });
-            const uri = file.assets[0].uri;
+            const uri = file.uri;
             setCvFile(uri); // CV dosyasının URI'sini saklayın
-            //console.log(file.assets[0].uri);
         } catch (err) {
             console.log(err);
         }
@@ -72,7 +61,6 @@ export default function ProfilDoldurmaSayfasi({ navigation }) {
             if (!fileUri) return null;
 
             const fileName = fileUri.split('/').pop();
-            console.log(fileUri);
             const response = await fetch(fileUri);
             const blob = await response.blob();
 
@@ -87,20 +75,16 @@ export default function ProfilDoldurmaSayfasi({ navigation }) {
             await uploadTask;
 
             const downloadURL = await getDownloadURL(storageRef);
-            //console.log('downloadURL: ', downloadURL);
             return downloadURL;
-
         } catch (error) {
             console.log(error);
             Alert.alert('Hata', 'Belge yüklenirken bir hata oluştu.');
         }
     };
 
-
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollView}>
-                <Image style={styles.logo} source={require('../../assets/giris.png')} />
                 <View style={styles.inputContainer}>
                     <TextInput
                         style={styles.input}
@@ -143,7 +127,6 @@ export default function ProfilDoldurmaSayfasi({ navigation }) {
                         multiline
                     />
 
-
                     <TouchableOpacity style={styles.uploadButton} onPress={handleSelectCV}>
                         <Ionicons name="document-attach-outline" size={24} color="#fafafa" />
                         <Text style={styles.uploadText}>CV Yükle</Text>
@@ -154,7 +137,7 @@ export default function ProfilDoldurmaSayfasi({ navigation }) {
                         </View>
                     )}
                     <TouchableOpacity style={styles.saveButton} onPress={handleSaveProfile}>
-                        <Text style={styles.saveButtonText}>Profil Oluştur</Text>
+                        <Text style={styles.saveButtonText}>Profil Güncelle</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>
@@ -217,12 +200,4 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         marginBottom: 10,
     },
-    logo: {
-        width: 300,
-        height: 300,
-        marginTop: 50,
-        marginBottom: 20,
-    },
 });
-
-

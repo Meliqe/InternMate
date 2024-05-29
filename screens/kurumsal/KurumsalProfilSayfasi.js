@@ -67,7 +67,7 @@ const KurumsalProfilSayfasi = ({ navigation }) => {
                             </View>
 
                             <TouchableOpacity style={styles.updateProfileButton}>
-                                <Text style={styles.buttonText}>Profilimi Güncelle</Text>
+                                <Text style={styles.buttonText} onPress={() => navigation.navigate('KurumsalProfilGuncelleme')} >Profilimi Güncelle</Text>
                             </TouchableOpacity>
                         </View>
                     )}

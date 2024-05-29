@@ -105,7 +105,7 @@ const KullaniciProfili = ({ navigation }) => {
                                 </TouchableOpacity>
                             </View>
 
-                            <TouchableOpacity style={styles.updateProfileButton}>
+                            <TouchableOpacity style={styles.updateProfileButton} onPress={() => navigation.navigate('KullaniciProfilGuncelle')}>
                                 <Text style={styles.buttonText}>Profilimi Güncelle</Text>
                             </TouchableOpacity>
                         </View>
