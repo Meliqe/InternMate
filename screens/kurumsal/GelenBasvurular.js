@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, FlatList, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, FlatList, ActivityIndicator, TouchableOpacity, Linking } from 'react-native';
 import { firestore, auth } from '../../config/firebase';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -51,10 +51,21 @@ const GelenBasvurular = () => {
                         const basvurankisiDoc = await getDoc(doc(firestore, 'users2', basvuruData.basvurankisi));
                         const ilanDoc = await getDoc(doc(firestore, 'ilanlar', basvuruData.basvurulanilan));
 
+                        // Kullanıcı verileri ve CV dosyasını al
+                        const userData = basvurankisiDoc.data();
+                        const cvFile = userData.cvFile;
+
+                        // CV dosyasının varlığını kontrol et
+                        let cvUrl = null;
+                        if (cvFile) {
+                            cvUrl = cvFile;
+                        }
+
                         return {
                             id: basvuruDoc.id,
-                            applicant: basvurankisiDoc.data(),
+                            applicant: userData,
                             ilan: ilanDoc.data(),
+                            cvUrl: cvUrl,
                         };
                     })
                 );
@@ -90,6 +101,14 @@ const GelenBasvurular = () => {
                     <Text style={styles.userInfoText}>Okul: {item.applicant?.school}</Text>
                     <Text style={styles.userInfoText}>Sınıf: {item.applicant?.grade}</Text>
                     <Text style={styles.userInfoText}>Hakkımda: {item.applicant?.introduction}</Text>
+                    {item.cvUrl && (
+                        <TouchableOpacity
+                            style={styles.cvButton}
+                            onPress={() => Linking.openURL(item.cvUrl)}
+                        >
+                            <Text style={styles.cvButtonText}>CV'yi Görüntülemek İçin Tıklayın</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
             </View>
         );
@@ -120,7 +139,8 @@ const GelenBasvurular = () => {
     );
 };
 
-export default GelenBasvurular;
+
+
 
 const styles = StyleSheet.create({
     container: {
@@ -183,3 +203,5 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
 });
+
+export default GelenBasvurular;
