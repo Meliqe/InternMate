@@ -1,100 +1,125 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { firestore } from '../../config/firebase';
+import { StyleSheet, Text, View, FlatList } from 'react-native';
+import { firestore, auth } from '../../config/firebase';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 
-const GelenBasvurular = ({ currentUser }) => {
-    const [basvurular, setBasvurular] = useState([]);
+const GelenBasvurular = () => {
+    const [applications, setApplications] = useState([]);
+    const [error, setError] = useState(null);
+    const [currentUser, setCurrentUser] = useState(null);
 
     useEffect(() => {
-        const fetchBasvurular = async () => {
+        const unsubscribe = onAuthStateChanged(auth, user => {
+            if (user) {
+                setCurrentUser(user);
+            } else {
+                setCurrentUser(null);
+            }
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    useEffect(() => {
+        const fetchApplications = async () => {
             try {
-                // Başvurular koleksiyonunu sorgula
-                const basvuruQuery = query(collection(firestore, 'basvurular'));
-                const basvuruSnapshot = await getDocs(basvuruQuery);
-
-                const basvuruData = [];
-
-                for (const basvuruDoc of basvuruSnapshot.docs) {
-                    const basvuru = basvuruDoc.data();
-
-                    // Başvuran kişinin bilgilerini al
-                    const basvuranKisiQuery = query(collection(firestore, 'users2'), where('userId', '==', basvuru.basvurankisi));
-                    const basvuranKisiSnapshot = await getDocs(basvuranKisiQuery);
-                    const basvuranKisiData = basvuranKisiSnapshot.docs.map(doc => doc.data());
-
-                    // Başvurulan ilanı al
-                    const ilanQuery = query(collection(firestore, 'ilanlar'), where('ilanId', '==', basvuru.basvurulanilan));
-                    const ilanSnapshot = await getDocs(ilanQuery);
-                    const ilanData = ilanSnapshot.docs.map(doc => doc.data());
-
-                    if (ilanData.length > 0 && basvuranKisiData.length > 0) {
-                        const ilan = ilanData[0];
-                        const basvuranKisi = basvuranKisiData[0];
-
-                        // Eğer oturum açan kullanıcı ile ilanı veren kişi aynı ise
-                        if (ilan.ilanverenkisi === currentUser) {
-                            basvuruData.push({
-                                ...basvuru,
-                                basvuranKisi,
-                                ilan
-                            });
-                        }
-                    }
+                if (!currentUser) {
+                    return;
                 }
 
-                setBasvurular(basvuruData);
+                const userId = currentUser.uid;
+
+                // Kurumsal kullanıcının ilanlarına yapılan başvuruları getirme
+                const ilanlarQuery = query(collection(firestore, 'ilanlar'), where('ilanverenkisi', '==', userId));
+                const ilanlarSnapshot = await getDocs(ilanlarQuery);
+
+                const ilanlarIds = ilanlarSnapshot.docs.map(doc => doc.id);
+
+                if (ilanlarIds.length === 0) {
+                    setApplications([]);
+                    return;
+                }
+
+                const basvurularQuery = query(collection(firestore, 'basvurular'), where('basvurulanilan', 'in', ilanlarIds));
+                const basvurularSnapshot = await getDocs(basvurularQuery);
+
+                const applicationsData = await Promise.all(
+                    basvurularSnapshot.docs.map(async basvuruDoc => {
+                        const basvuruData = basvuruDoc.data();
+                        const basvurankisiDoc = await getDoc(doc(firestore, 'users2', basvuruData.basvurankisi));
+                        const ilanDoc = await getDoc(doc(firestore, 'ilanlar', basvuruData.basvurulanilan));
+
+                        return {
+                            id: basvuruDoc.id,
+                            applicant: basvurankisiDoc.data(),
+                            ilan: ilanDoc.data(),
+                        };
+                    })
+                );
+
+                setApplications(applicationsData);
             } catch (error) {
-                console.error('Başvuruları getirme hatası: ', error);
+                console.error('Error fetching applications: ', error);
+                setError(error.message);
             }
         };
 
-        if (currentUser) {
-            fetchBasvurular();
-        }
+        fetchApplications();
     }, [currentUser]);
+
+    const renderItem = ({ item }) => (
+        <View style={styles.item}>
+            <Text style={styles.title}>Başvuru ID: {item.id}</Text>
+            <Text>Kullanıcı: {item.applicant?.name}</Text>
+            <Text>Email: {item.applicant?.email}</Text>
+            <Text>İlan: {item.ilan?.title}</Text>
+            <Text>İlan Açıklaması: {item.ilan?.description}</Text>
+        </View>
+    );
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Gelen Başvurular</Text>
-            <FlatList
-                data={basvurular}
-                keyExtractor={(item, index) => index.toString()}
-                renderItem={({ item }) => (
-                    <View style={styles.basvuruContainer}>
-                        <Text style={styles.basvuruText}>Başvuran Kişi: {item.basvuranKisi.name}</Text>
-                        <Text style={styles.basvuruText}>Başvurulan İlan: {item.ilan.title}</Text>
-                        <Text style={styles.basvuruText}>Başvuru Tarihi: {item.basvurutarihi}</Text>
-                    </View>
-                )}
-            />
+            <Text style={styles.header}>Gelen Başvurular</Text>
+            {error ? (
+                <Text style={styles.error}>Hata: {error}</Text>
+            ) : (
+                <FlatList
+                    data={applications}
+                    renderItem={renderItem}
+                    keyExtractor={item => item.id}
+                />
+            )}
         </View>
     );
 };
 
+export default GelenBasvurular;
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
         padding: 20,
+        backgroundColor: '#fff',
     },
-    title: {
+    header: {
         fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 20,
     },
-    basvuruContainer: {
+    item: {
+        padding: 15,
         borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 10,
-        padding: 10,
-        marginBottom: 10,
+        borderColor: '#ddd',
+        borderRadius: 5,
+        marginBottom: 15,
     },
-    basvuruText: {
+    title: {
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    error: {
+        color: 'red',
         fontSize: 16,
-        marginBottom: 5,
     },
 });
-
-export default GelenBasvurular;
