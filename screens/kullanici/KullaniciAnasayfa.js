@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, SafeAreaView, Animated } from 'react-native';
 import { firestore } from '../../config/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { getAuth, signOut } from 'firebase/auth'; // signOut eklenmeli
 
 const KullaniciAnasayfa = () => {
     const [ilanlar, setIlanlar] = useState([]);
@@ -11,17 +12,23 @@ const KullaniciAnasayfa = () => {
     const navigation = useNavigation();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [sidebarWidth] = useState(new Animated.Value(0));
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
 
     useEffect(() => {
         const fetchIlanlar = async () => {
             try {
+                // Kullanıcının başvurduğu ilanları alın
+                const basvurularQuery = query(collection(firestore, 'basvurular'), where('basvurankisi', '==', currentUser.uid));
+                const basvurularSnapshot = await getDocs(basvurularQuery);
+                const basvurulanIlanlar = basvurularSnapshot.docs.map(doc => doc.data().basvurulanilan);
+
+                // Tüm ilanları alın ve başvurulmayan ilanları filtreleyin
                 const ilanlarQuery = collection(firestore, 'ilanlar');
                 const querySnapshot = await getDocs(ilanlarQuery);
-                const fetchedIlanlar = [];
-
-                querySnapshot.forEach((doc) => {
-                    fetchedIlanlar.push({ id: doc.id, ...doc.data() });
-                });
+                const fetchedIlanlar = querySnapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .filter(ilan => !basvurulanIlanlar.includes(ilan.id));
 
                 setIlanlar(fetchedIlanlar);
             } catch (error) {
@@ -32,10 +39,19 @@ const KullaniciAnasayfa = () => {
         };
 
         fetchIlanlar();
-    }, []);
+    }, [currentUser.uid]);
 
     const handleIlanIncele = (ilanId) => {
         navigation.navigate('IlanDetaylari', { ilanId });
+    };
+
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            navigation.navigate('KullaniciGiris');
+        } catch (error) {
+            console.error('Error signing out: ', error);
+        }
     };
 
     const toggleSidebar = () => {
@@ -51,18 +67,8 @@ const KullaniciAnasayfa = () => {
         navigation.navigate('KullaniciProfili');
     };
 
-    const navigateToOffers = () => {
-        navigation.navigate('Tekliflerim');
-    };
-
     const navigateToApplications = () => {
         navigation.navigate('Basvurularim');
-    };
-
-    const handleLogout = () => {
-        // Your logout logic here
-        // Redirect to login page after logout
-        navigation.navigate('KullaniciGiris');
     };
 
     const renderIlanItem = ({ item }) => (
@@ -109,9 +115,6 @@ const KullaniciAnasayfa = () => {
                 <TouchableOpacity style={styles.sidebarItem} onPress={navigateToProfile}>
                     <Text>Profilim</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.sidebarItem} onPress={navigateToOffers}>
-                    <Text>Tekliflerim</Text>
-                </TouchableOpacity>
                 <TouchableOpacity style={styles.sidebarItem} onPress={navigateToApplications}>
                     <Text>Başvurularım</Text>
                 </TouchableOpacity>
@@ -133,7 +136,6 @@ const KullaniciAnasayfa = () => {
         </SafeAreaView>
     );
 };
-
 const styles = StyleSheet.create({
     safeContainer: {
         flex: 1,
@@ -147,7 +149,6 @@ const styles = StyleSheet.create({
     navbar: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between', // Align items to start, end, and in between
         paddingHorizontal: 20,
         paddingVertical: 10,
         borderBottomWidth: 1,
@@ -158,6 +159,7 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: 'bold',
         marginLeft: 10,
+        flex: 1, // Navbar title'ın genişlemesini sağlar
     },
     content: {
         flex: 1,
@@ -209,7 +211,8 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 16,
         color: '#888',
-    }, sidebar: {
+    },
+    sidebar: {
         position: 'absolute',
         top: 60, // Adjust as needed
         left: 0,
@@ -239,4 +242,3 @@ const styles = StyleSheet.create({
 });
 
 export default KullaniciAnasayfa;
-

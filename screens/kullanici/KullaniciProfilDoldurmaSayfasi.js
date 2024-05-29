@@ -60,8 +60,8 @@ export default function ProfilDoldurmaSayfasi({ navigation }) {
                 type: 'application/msword', // CV dosyasının sadece PDF formatında olmasını sağlayın
             });
             const uri = file.assets[0].uri;
-                setCvFile(uri); // CV dosyasının URI'sini saklayın
-                //console.log(file.assets[0].uri);
+            setCvFile(uri); // CV dosyasının URI'sini saklayın
+            //console.log(file.assets[0].uri);
         } catch (err) {
             console.log(err);
         }
@@ -70,26 +70,26 @@ export default function ProfilDoldurmaSayfasi({ navigation }) {
     const uploadCV = async (fileUri) => {
         try {
             if (!fileUri) return null;
-    
+
             const fileName = fileUri.split('/').pop();
             console.log(fileUri);
             const response = await fetch(fileUri);
             const blob = await response.blob();
-    
+
             const storageRef = ref(storage, 'documents/' + fileName);
             const uploadTask = uploadBytesResumable(storageRef, blob);
-    
+
             uploadTask.on('state_changed', snapshot => {
                 const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                 setUploadProgress(progress);
             });
-    
+
             await uploadTask;
-    
+
             const downloadURL = await getDownloadURL(storageRef);
             //console.log('downloadURL: ', downloadURL);
             return downloadURL;
-    
+
         } catch (error) {
             console.log(error);
             Alert.alert('Hata', 'Belge yüklenirken bir hata oluştu.');
@@ -165,15 +165,8 @@ export default function ProfilDoldurmaSayfasi({ navigation }) {
                         onChangeText={setIntroduction}
                         multiline
                     />
-                    <TouchableOpacity style={styles.uploadButton} onPress={handleSelectCertificates}>
-                        <Ionicons name="document-attach-outline" size={24} color="#fafafa" />
-                        <Text style={styles.uploadText}>Sertifika Seç</Text>
-                    </TouchableOpacity>
-                    {certificates.map((certificate, index) => (
-                        <View key={index} style={styles.certificateItem}>
-                            <Text>{certificate.name}</Text>
-                        </View>
-                    ))}
+
+
                     <TouchableOpacity style={styles.uploadButton} onPress={handleSelectCV}>
                         <Ionicons name="document-attach-outline" size={24} color="#fafafa" />
                         <Text style={styles.uploadText}>CV Yükle</Text>
@@ -227,13 +220,6 @@ const styles = StyleSheet.create({
     uploadText: {
         fontSize: 16,
         color: '#fafafa'
-    },
-    certificateItem: {
-        backgroundColor: '#f9f9f9',
-        borderRadius: 5,
-        paddingHorizontal: 10,
-        paddingVertical: 8,
-        marginBottom: 5,
     },
     saveButton: {
         backgroundColor: '#bcd6ff',

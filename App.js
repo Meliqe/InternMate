@@ -15,7 +15,6 @@ import KullaniciKayit from './screens/kullanici/KullaniciKayit';
 import KullaniciAnasayfa from './screens/kullanici/KullaniciAnasayfa';
 import KullaniciProfilDoldurmaSayfasi from './screens/kullanici/KullaniciProfilDoldurmaSayfasi';
 import Basvurularim from './screens/kullanici/Basvurularim';
-import Tekliflerim from './screens/kullanici/Tekliflerim';
 import YardimDestek from './screens/kullanici/YardimDestek';
 import KullaniciProfili from './screens/kullanici/KullaniciProfili';
 import IlanDetaylar from './screens/kullanici/IlanDetaylar';
@@ -49,7 +48,6 @@ export default function App() {
         <Stack.Screen name="KullaniciProfilDoldurmaSayfasi" component={KullaniciProfilDoldurmaSayfasi} options={{ headerShown: false }} />
         <Stack.Screen name="KullaniciProfili" component={KullaniciProfili} options={{ headerShown: false }} />
         <Stack.Screen name="Basvurularim" component={Basvurularim} options={{ headerShown: false }} />
-        <Stack.Screen name="Tekliflerim" component={Tekliflerim} options={{ headerShown: false }} />
         <Stack.Screen name="YardimDestek" component={YardimDestek} options={{ headerShown: false }} />
         <Stack.Screen name="IlanDetaylari" component={IlanDetaylar} options={{ headerShown: false }} />
 

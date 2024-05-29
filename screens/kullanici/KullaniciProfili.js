@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, SafeAreaView, TouchableOpacity, ScrollView,Linking } from 'react-native';
+import { View, Text, StyleSheet, Image, SafeAreaView, TouchableOpacity, ScrollView, Linking } from 'react-native';
 import { auth, firestore } from '../../config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import * as FileSystem from 'expo-file-system';
@@ -103,11 +103,6 @@ const KullaniciProfili = ({ navigation }) => {
                                     <Icon name="document" size={24} color="#fff" />
                                     <Text style={styles.cvDownloadText}>CV İndir</Text>
                                 </TouchableOpacity>
-                            </View>
-
-                            <View style={styles.infoBox}>
-                                <Text style={styles.label}>Sertifikalar</Text>
-                                <Text style={styles.value}>{userData.certificates}</Text>
                             </View>
 
                             <TouchableOpacity style={styles.updateProfileButton}>
