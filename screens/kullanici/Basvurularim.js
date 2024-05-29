@@ -78,8 +78,15 @@ const Basvurularim = () => {
                 renderItem={({ item }) => (
                     <View style={[styles.basvuruContainer, { borderColor: getStatusColor(item.basvurudurumu) }]}>
                         <Text style={styles.ilanBaslik}>{item.ilan?.title}</Text>
+                        <Text style={styles.ilanaciklama}>{item.ilan?.desc}</Text>
                         <Text style={styles.basvuruTarih}>Başvuru Tarihi: {item.basvurutarihi.toDate().toLocaleDateString()}</Text>
                         <Text style={styles.basvuruDurumu}>Durum: {item.basvurudurumu}</Text>
+                        {item.basvurudurumu === 'Onaylandı' && (
+                            <Text style={styles.onaylanmaTarihi}>Onaylanma Tarihi: {item.onaylanmaTarihi.toDate().toLocaleString()}</Text>
+                        )}
+                        {item.basvurudurumu === 'Reddedildi' && (
+                            <Text style={styles.reddedilmeTarihi}>Reddedilme Tarihi: {item.reddedilmeTarihi.toDate().toLocaleString()}</Text>
+                        )}
                     </View>
                 )}
             />
@@ -130,6 +137,17 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginBottom: 10,
     },
+    onaylanmaTarihi: {
+        fontSize: 16,
+        marginBottom: 10,
+    },
+    reddedilmeTarihi: {
+        fontSize: 16,
+        marginBottom: 10,
+    },
+    ilanaciklama: {
+        fontSize: 16,
+    }
 });
 
 export default Basvurularim;

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, FlatList, ActivityIndicator, TouchableOpacity, Linking } from 'react-native';
 import { firestore, auth } from '../../config/firebase';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const GelenBasvurular = () => {
     const [applications, setApplications] = useState([]);
@@ -66,6 +67,7 @@ const GelenBasvurular = () => {
                             applicant: userData,
                             ilan: ilanDoc.data(),
                             cvUrl: cvUrl,
+                            status: basvuruData.basvurudurumu
                         };
                     })
                 );
@@ -82,13 +84,62 @@ const GelenBasvurular = () => {
         fetchApplications();
     }, [currentUser]);
 
+    const handleApprove = async (basvuruId) => {
+        try {
+            const basvuruRef = doc(firestore, 'basvurular', basvuruId);
+            await updateDoc(basvuruRef, {
+                basvurudurumu: 'Onaylandı',
+                onaylanmaTarihi: new Date()
+            });
+            console.log('Başvuru onaylandı.');
+            // Burada gerekirse bir bildirim gösterebilirsiniz veya başka bir işlem yapabilirsiniz.
+        } catch (error) {
+            console.error('Error approving application: ', error);
+            // Hata durumunda kullanıcıya bilgi vermek için bir bildirim gösterebilirsiniz.
+        }
+    };
+
+    const handleReject = async (basvuruId) => {
+        try {
+            const basvuruRef = doc(firestore, 'basvurular', basvuruId);
+            await updateDoc(basvuruRef, {
+                basvurudurumu: 'Reddedildi',
+                reddedilmeTarihi: new Date()
+            });
+            console.log('Başvuru reddedildi.');
+            // Burada gerekirse bir bildirim gösterebilirsiniz veya başka bir işlem yapabilirsiniz.
+        } catch (error) {
+            console.error('Error rejecting application: ', error);
+            // Hata durumunda kullanıcıya bilgi vermek için bir bildirim gösterebilirsiniz.
+        }
+    };
+
+    const renderStatus = (status) => {
+        switch (status) {
+            case 'Onaylandı':
+                return <Text style={styles.statusText}>Onaylandı</Text>;
+            case 'Reddedildi':
+                return <Text style={styles.statusText}>Reddedildi</Text>;
+            default:
+                return (
+                    <View style={styles.buttonsContainer}>
+                        <TouchableOpacity style={styles.button} onPress={() => handleApprove(status.id)}>
+                            <Icon name="checkmark-circle-outline" size={30} color="#4CAF50" />
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.button} onPress={() => handleReject(status.id)}>
+                            <Icon name="close-circle-outline" size={30} color="#F44336" />
+                        </TouchableOpacity>
+                    </View>
+                );
+        }
+    };
+
     const renderItem = ({ item }) => {
         const createdAtDate = new Date(item.ilan?.createdAt.seconds * 1000);
         const formattedDate = createdAtDate.toLocaleDateString();
 
         return (
             <View style={styles.itemContainer}>
-                {/*<Text style={styles.title}>Başvuru ID: {item.id}</Text>*/}
                 <Text style={styles.ilanTitle}>{item.ilan?.title}</Text>
                 <Text style={styles.ilanDesc}>{item.ilan?.desc}</Text>
                 <Text style={styles.ilanDate}>Oluşturulma Tarihi: {formattedDate}</Text>
@@ -109,6 +160,7 @@ const GelenBasvurular = () => {
                             <Text style={styles.cvButtonText}>CV'yi Görüntülemek İçin Tıklayın</Text>
                         </TouchableOpacity>
                     )}
+                    {renderStatus(item.status)}
                 </View>
             </View>
         );
@@ -138,9 +190,6 @@ const GelenBasvurular = () => {
         </View>
     );
 };
-
-
-
 
 const styles = StyleSheet.create({
     container: {
@@ -202,6 +251,33 @@ const styles = StyleSheet.create({
         fontSize: 16,
         textAlign: 'center',
     },
+    buttonsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 10,
+    },
+    button: {
+        padding: 5,
+        borderRadius: 5,
+    },
+    cvButton: {
+        backgroundColor: '#4285F4',
+        padding: 10,
+        borderRadius: 5,
+        marginTop: 10,
+    },
+    cvButtonText: {
+        color: '#fff',
+        textAlign: 'center',
+    },
+    statusText: {
+        textAlign: 'center',
+        fontWeight: 'bold',
+        fontSize: 16,
+        color: '#333',
+        marginTop: 10,
+    },
 });
 
 export default GelenBasvurular;
+
